@@ -8,6 +8,7 @@
 """
 
 
+import argparse
 import os
 import sys
 import copy
@@ -140,9 +141,10 @@ class DGCNN(nn.Module):
 
         x = torch.cat((x1, x2, x3, x4), dim=1)
 
-        x = self.conv5(x)
-        x1 = F.adaptive_max_pool1d(x, 1).view(batch_size, -1)
-        x2 = F.adaptive_avg_pool1d(x, 1).view(batch_size, -1)
+        point_feat = self.conv5(x)
+        # print("x1.shape", x.shape)
+        x1 = F.adaptive_max_pool1d(point_feat, 1).view(batch_size, -1)
+        x2 = F.adaptive_avg_pool1d(point_feat, 1).view(batch_size, -1)
         x = torch.cat((x1, x2), 1)
 
         x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)
@@ -150,4 +152,17 @@ class DGCNN(nn.Module):
         x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)
         x = self.dp2(x)
         x = self.linear3(x)
-        return x
+        return x, point_feat
+
+if __name__ == "__main__":
+    import argparse
+    torch.cuda.set_device(1)
+    args = argparse.Namespace()
+    args.emb_dims = 1024
+    args.k = 20
+    args.dropout = 0.5
+    model = DGCNN(args).cuda()
+    model.eval()  # 设置为评估模式，避免BatchNorm在batch_size=1时出错
+    
+    x = torch.randn(1, 3, 1024).cuda()
+    print(model(x).shape)
