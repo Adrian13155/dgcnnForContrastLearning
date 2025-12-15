@@ -18,7 +18,7 @@ from torch.utils.data import Dataset
 
 def download():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_DIR = os.path.join(BASE_DIR, 'data')
+    DATA_DIR = os.path.join("/data/cjj/projects/pointnet.pytorch", 'data')
     if not os.path.exists(DATA_DIR):
         os.mkdir(DATA_DIR)
     if not os.path.exists(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048')):
@@ -32,7 +32,7 @@ def download():
 def load_data(partition):
     download()
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_DIR = os.path.join(BASE_DIR, 'data')
+    DATA_DIR = os.path.join("/data/cjj/projects/pointnet.pytorch", 'data')
     all_data = []
     all_label = []
     for h5_name in glob.glob(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048', 'ply_data_%s*.h5'%partition)):

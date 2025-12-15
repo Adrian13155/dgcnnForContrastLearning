@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from model import DGCNN
+from models.GDANet_cls import GDANET
 from contrast_loss import region_contrastive_loss, info_nce_loss
 from datetime import datetime
 from Fusion360Dataset import BatchFusion360Dataset
@@ -42,33 +43,33 @@ def parse_args():
                    help="Number of parts per group (B=20, parts from same assembly)")
     p.add_argument("--nepoch", type=int, default=200)
     p.add_argument("--npoints", type=int, default=1024)
-    p.add_argument("--lr", type=float, default=1e-3)  # 原来是1e-3
+    p.add_argument("--lr", type=float, default= 1e-3)  # 原来是1e-3
     p.add_argument("--step_size", type=int, default=20)
     p.add_argument("--gamma", type=float, default=0.5)
     p.add_argument("--workers", type=int, default=0)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--use_cpu", action="store_true", default=False)
-    p.add_argument("--gpu_id", type=str, default="4")
+    p.add_argument("--gpu_id", type=str, default="7")
     # augmentation & contrastive
     p.add_argument("--rotation_mode", type=str, default="xyz", choices=["xyz", "yaw", "none"])
     p.add_argument("--no_jitter", action="store_true", default=False)
     p.add_argument("--lambda_con", type=float, default=0.1, help="weight for contrastive loss")
     p.add_argument("--lambda_region", type=float, default=0.1, help="weight for region contrastive loss")
     p.add_argument("--temperature", type=float, default=0.07)
-    p.add_argument("--use_region_contrast", action="store_true", default=False, help="use region contrastive learning")
+    p.add_argument("--use_region_contrast", action="store_true", default=True, help="use region contrastive learning")
     # graphcut segmentation parameters
-    p.add_argument("--use_graphcut_segmentation", action="store_true", default=False, help="use graphcut segmentation for grouping")
+    p.add_argument("--use_graphcut_segmentation", action="store_true", default=True, help="use graphcut segmentation for grouping")
     p.add_argument("--graphcut_k", type=int, default=8, help="number of neighbors for graphcut")
     p.add_argument("--graphcut_c", type=float, default=0.5, help="merging threshold for graphcut")
     p.add_argument("--graphcut_min_size", type=int, default=20, help="minimum region size for graphcut")
 
-    p.add_argument('--exp_name', type=str, default='Fusion360BatchGroupContrastContinue', help='')
+    p.add_argument('--exp_name', type=str, default='GDANetFusion360BatchGroupContrast', help='')
     p.add_argument('--save_dir', help='日志保存路径', default='/data/cjj/projects/PointCloudLearning/dgcnn/experiment', type=str)
-    # p.add_argument('--checkpoint_path', type=str, default='', help="checkpoint path")
+    # p.add_argument('--checkpoint_path', type=str, default='/data/cjj/projects/PointCloudLearning/dgcnn/experiment/12-08_10:25_Fusion360BatchGroupContrast/epoch119.pth', help="checkpoint path")
 
-    p.add_argument('--dropout', type=float, default=0.5, help='dropout rate')
-    p.add_argument('--emb_dims', type=int, default=1024, help='Dimension of embeddings')
-    p.add_argument('--k', type=int, default=20, help='Num of nearest neighbors to use')
+    # p.add_argument('--dropout', type=float, default=0.5, help='dropout rate')
+    # p.add_argument('--emb_dims', type=int, default=1024, help='Dimension of embeddings')
+    # p.add_argument('--k', type=int, default=20, help='Num of nearest neighbors to use')
     return p.parse_args()
 
 
@@ -137,7 +138,8 @@ def main():
 
     train_loader = make_loaders(args)
 
-    net = DGCNN(args).to(device)
+    # net = DGCNN(args).to(device)
+    net = GDANET().to(device)
     optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(0.9, 0.999))
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 

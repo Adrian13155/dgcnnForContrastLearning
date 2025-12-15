@@ -24,7 +24,7 @@ from util import cal_loss, IOStream
 import sklearn.metrics as metrics
 
 
-def _init_():
+def _init_(args):
     if not os.path.exists('checkpoints'):
         os.makedirs('checkpoints')
     if not os.path.exists('checkpoints/'+args.exp_name):
@@ -53,8 +53,6 @@ def train(args, io):
         raise Exception("Not implemented")
     print(str(model))
 
-    model = nn.DataParallel(model)
-    print("Let's use", torch.cuda.device_count(), "GPUs!")
 
     if args.use_sgd:
         print("Use SGD")
@@ -205,10 +203,12 @@ if __name__ == "__main__":
                         help='Num of nearest neighbors to use')
     parser.add_argument('--model_path', type=str, default='', metavar='N',
                         help='Pretrained model path')
+    parser.add_argument('--gpu_id', type=str, default="7", metavar='N',
+                        help='GPU id')
     args = parser.parse_args()
 
-    _init_()
-
+    _init_(args)
+    torch.cuda.set_device(int(args.gpu_id))
     io = IOStream('checkpoints/' + args.exp_name + '/run.log')
     io.cprint(str(args))
 
